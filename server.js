@@ -10,6 +10,8 @@ let externalRequest = null;
 const dateRequests = new Map();
 const oddsCache = {};
 const ODDS_CACHE_TTL = 60 * 60 * 1000;
+const standingsCache = {};
+const statisticsCache = {};
 const apiFootballKey = process.env.API_FOOTBALL_KEY || process.env.API_KEY;
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -265,6 +267,80 @@ app.get(['/api/matches', '/api/live', '/api/fixtures'], async (req, res) => {
     dateRequests.delete(cacheKey);
     console.log(e);
     res.json(cachedDate?.data || []);
+  }
+});
+
+async function fetchFootballApi(endpoint) {
+  if (!apiFootballKey) return { error: 'Clé manquante' };
+
+  const response = await fetch(`https://v3.football.api-sports.io/${endpoint}`, {
+    headers: { 'x-apisports-key': apiFootballKey }
+  });
+  const data = await response.json();
+
+  if (!response.ok || data.errors && Object.keys(data.errors).length > 0) {
+    return { error: 'Erreur API-Football', details: data.errors };
+  }
+
+  return data;
+}
+
+app.get('/api/standings', async (req, res) => {
+  const league = Number(req.query.league);
+  const season = Number(req.query.season);
+
+  if (!Number.isInteger(league) || !Number.isInteger(season)) {
+    return res.status(400).json({ error: 'Paramètres league et season invalides' });
+  }
+
+  const cacheKey = `${league}-${season}`;
+  if (standingsCache[cacheKey]) return res.json(standingsCache[cacheKey]);
+
+  try {
+    const data = await fetchFootballApi(`standings?league=${league}&season=${season}`);
+    if (data.error) return res.status(502).json(data);
+    const result = Array.isArray(data.response) ? data.response : [];
+    standingsCache[cacheKey] = result;
+    return res.json(result);
+  } catch (error) {
+    console.error('Erreur standings:', error);
+    return res.status(502).json({ error: 'Impossible de récupérer les classements' });
+  }
+});
+
+app.get('/api/statistics/:fixture', async (req, res) => {
+  const fixture = Number(req.params.fixture);
+  if (!Number.isInteger(fixture) || fixture <= 0) {
+    return res.status(400).json({ error: 'Identifiant fixture invalide' });
+  }
+
+  if (statisticsCache[fixture]) return res.json(statisticsCache[fixture]);
+
+  try {
+    const data = await fetchFootballApi(`fixtures/statistics?fixture=${fixture}`);
+    if (data.error) return res.status(502).json(data);
+    const result = Array.isArray(data.response) ? data.response : [];
+    statisticsCache[fixture] = result;
+    return res.json(result);
+  } catch (error) {
+    console.error('Erreur statistiques fixture:', error);
+    return res.status(502).json({ error: 'Impossible de récupérer les statistiques' });
+  }
+});
+
+app.get('/api/fixture/:fixture', async (req, res) => {
+  const fixture = Number(req.params.fixture);
+  if (!Number.isInteger(fixture) || fixture <= 0) {
+    return res.status(400).json({ error: 'Identifiant fixture invalide' });
+  }
+
+  try {
+    const data = await fetchFootballApi(`fixtures?id=${fixture}`);
+    if (data.error) return res.status(502).json(data);
+    return res.json(Array.isArray(data.response) ? data.response[0] || null : null);
+  } catch (error) {
+    console.error('Erreur détail fixture:', error);
+    return res.status(502).json({ error: 'Impossible de récupérer le match' });
   }
 });
 

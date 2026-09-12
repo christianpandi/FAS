@@ -10,9 +10,14 @@ button{font:inherit}
 .header-actions{display:flex;align-items:center;gap:3px}
 .header-actions button{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer;font-size:16px}
 .header-actions button:hover{background:#1e293b}
+.header-link{color:#fff;text-decoration:none;font-size:11px;font-weight:800}
+.page-tabs,.match-tabs{display:flex;gap:8px;padding:8px;background:#fff;border-bottom:1px solid #e2e8f0}
+.page-tabs a,.match-tabs button{flex:1;padding:9px 8px;border:0;border-radius:5px;background:#f1f5f9;color:#64748b;font:inherit;font-size:11px;font-weight:800;text-align:center;text-decoration:none}
+.page-tabs a.active,.match-tabs button.active{background:#0a2a5a;color:#fff}
 .top-menu{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;height:48px;margin:8px 8px 0;padding:0 8px;overflow-x:auto;scroll-behavior:smooth;white-space:nowrap;background:#fff;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.18);scrollbar-width:none}
 .top-menu::-webkit-scrollbar{display:none}
 .top-menu button{flex:0 0 auto;padding:7px 12px;border:0;border-radius:20px;background:transparent;color:#64748b;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap}
+.top-link{flex:0 0 auto;padding:7px 12px;border-radius:20px;background:#f1f5f9;color:#64748b;font-size:12px;font-weight:700;text-decoration:none}
 .top-menu button.active{background:#0a2a5a;color:#fff}
 .live-dot{display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#ef4444;animation:pulse-live 1.3s infinite}
 @keyframes pulse-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
@@ -25,6 +30,7 @@ button{font:inherit}
 .league-country{color:#cbd5e1;font-size:10px}
 .league-chevron{margin-left:auto;color:#cbd5e1;font-size:17px;line-height:10px}
 .match-row{height:52px;display:flex;align-items:center;margin:0;padding:0 12px;background:#fff;border-bottom:1px solid #e9ecef}
+.match-row{cursor:pointer}
 .match-time{width:50px;display:flex;flex-direction:column;line-height:1;color:#cc0000;font-size:11px;font-weight:700}
 .live-label{display:block;color:#cc0000;font-size:9px;line-height:10px;letter-spacing:.2px}
 .match-teams{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-left:12px;color:#1e293b;font-size:13px}
@@ -40,6 +46,43 @@ button{font:inherit}
 .favorite:hover{color:#f59e0b}
 .odds{display:flex;gap:2px}
 .odds span{min-width:26px;padding:3px 4px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;color:#475569;font-size:10px;text-align:center}
+.page-content{min-height:calc(100vh - 48px);padding:20px 12px 32px;background:#f8fafc}
+.page-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:12px}
+.eyebrow{margin:0 0 4px;color:#64748b;font-size:10px;font-weight:800;letter-spacing:.08em}
+.page-content h1{margin:0;color:#0f172a;font-size:24px;line-height:1.1}
+.league-select-label{display:flex;flex-direction:column;gap:4px;color:#64748b;font-size:10px;font-weight:700}
+.league-select-label select{max-width:170px;padding:8px 9px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#0f172a;font:inherit;font-size:12px}
+.season-select-label{display:flex;align-items:center;gap:8px;margin-bottom:12px;color:#64748b;font-size:10px;font-weight:700}
+.season-select-label select{padding:7px 9px;border:1px solid #cbd5e1;border-radius:5px;background:#fff;color:#0f172a;font:inherit;font-size:12px}
+.page-status{margin:0 0 10px;color:#64748b;font-size:11px}
+.standings-panel{overflow:hidden;background:#fff;border:1px solid #e2e8f0;border-radius:6px}
+.standings-table-wrap{overflow-x:auto}
+.standings-table{width:100%;min-width:420px;border-collapse:collapse;color:#334155;font-size:12px}
+.standings-table th{padding:10px 7px;background:#0a2a5a;color:#fff;font-size:10px;text-align:center;white-space:nowrap}
+.standings-table th:nth-child(2),.standings-table td:nth-child(2){text-align:left}
+.standings-table td{padding:9px 7px;border-bottom:1px solid #e2e8f0;text-align:center}
+.standings-table tr:last-child td{border-bottom:0}
+.standing-rank{font-weight:800;color:#64748b}
+.standing-team{display:flex;align-items:center;gap:7px;min-width:170px;font-weight:700}
+.standing-team img{width:20px;height:20px;object-fit:contain}
+.standing-points{font-weight:900;color:#0f172a}
+.back-link{display:inline-block;margin-bottom:18px;color:#64748b;font-size:12px;font-weight:700;text-decoration:none}
+.match-summary{padding:16px;background:#0a2a5a;color:#fff;border-radius:6px}
+.match-summary h1{color:#fff}
+.match-header-teams{display:grid;grid-template-columns:1fr 70px 1fr;align-items:center;gap:8px}
+.match-header-team{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;text-align:center}
+.match-header-team img{width:38px;height:38px;object-fit:contain}
+.match-header-team strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;font-size:12px}
+.match-header-score{display:flex;flex-direction:column;align-items:center;gap:5px}
+.match-header-score strong{font-size:20px}.match-header-score span{color:#cbd5e1;font-size:11px;font-weight:700}
+.statistics-list{display:grid;gap:8px}
+.stat-card{padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:6px}
+.stat-values{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:8px;color:#0f172a;text-align:center}
+.stat-values span{color:#64748b;font-size:11px;font-weight:700}
+.stat-values strong:first-child{text-align:left}.stat-values strong:last-child{text-align:right}
+.stat-bar{display:flex;height:6px;margin-top:9px;overflow:hidden;border-radius:4px;background:#e2e8f0}
+.stat-bar span:first-child{background:#0a2a5a}.stat-bar span:last-child{background:#facc15}
+.empty-state{padding:20px;margin:0;background:#fff;border:1px solid #e2e8f0;border-radius:6px;color:#64748b;text-align:center}
 .bottom-nav,.footer{display:none}
 .bottom-nav a{min-width:58px;padding:7px 4px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#64748b;text-decoration:none;font-size:10px;font-weight:600}
 .bottom-nav a span:first-child{font-size:18px;line-height:18px}

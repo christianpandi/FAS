@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classements - FLASHALLSCORES</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="header">
+  <a class="brand" href="/" aria-label="FLASHALLSCORES">
+    <span class="brand-mark" aria-hidden="true">&#9889;</span>
+    <span>FLASHALLSCORES</span>
+    <span class="live-badge">LIVE</span>
+  </a>
+  <a class="header-link" href="/" aria-label="Retour aux matchs">MATCHS</a>
+</header>
+<nav class="page-tabs" aria-label="Navigation principale">
+  <a href="/">EN DIRECT</a>
+  <a class="active" href="/classements.html">CLASSEMENTS</a>
+</nav>
+<main class="page-content">
+  <div class="page-heading">
+    <div>
+      <p class="eyebrow">FAS FOOTBALL</p>
+      <h1>Classements</h1>
+    </div>
+    <label class="league-select-label" for="leagueSelect">
+      <span>Championnat</span>
+      <select id="leagueSelect">
+        <option value="39">Premier League</option>
+        <option value="140">LaLiga</option>
+        <option value="61">Ligue 1</option>
+        <option value="135">Serie A</option>
+        <option value="78">Bundesliga</option>
+        <option value="235">Linafoot RDC</option>
+      </select>
+    </label>
+  </div>
+  <label class="season-select-label" for="seasonSelect">
+    <span>Saison</span>
+    <select id="seasonSelect">
+      <option value="2024">2024/2025</option>
+      <option value="2023">2023/2024</option>
+    </select>
+  </label>
+  <p id="standingsStatus" class="page-status">Chargement...</p>
+  <section class="standings-panel">
+    <div class="standings-table-wrap">
+      <table class="standings-table">
+        <thead><tr><th>#</th><th>Equipe</th><th>MJ</th><th>G</th><th>N</th><th>P</th><th>Diff</th><th>Pts</th></tr></thead>
+        <tbody id="standingsBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<script>
+const leagueSelect = document.getElementById('leagueSelect');
+const seasonSelect = document.getElementById('seasonSelect');
+const standingsBody = document.getElementById('standingsBody');
+const standingsStatus = document.getElementById('standingsStatus');
+
+function getStandingsRows(data) {
+  return data.flatMap(item => item.league?.standings || []).flat();
+}
+
+function renderStandings(data) {
+  const rows = getStandingsRows(data);
+  if (rows.length === 0) {
+    standingsBody.innerHTML = '<tr><td colspan="8">Aucun classement disponible</td></tr>';
+    return;
+  }
+
+  standingsBody.innerHTML = rows.map(row => `<tr>
+    <td class="standing-rank">${row.rank ?? '-'}</td>
+    <td class="standing-team"><img src="${row.team?.logo || ''}" alt=""><span>${row.team?.name || 'Equipe inconnue'}</span></td>
+    <td>${row.all?.played ?? '-'}</td>
+    <td>${row.all?.win ?? '-'}</td>
+    <td>${row.all?.draw ?? '-'}</td>
+    <td>${row.all?.lose ?? '-'}</td>
+    <td>${row.goalsDiff ?? '-'}</td>
+    <td class="standing-points">${row.points ?? '-'}</td>
+  </tr>`).join('');
+}
+
+async function loadStandings() {
+  const league = leagueSelect.value;
+  const season = seasonSelect.value;
+  standingsStatus.textContent = 'Chargement...';
+  standingsBody.innerHTML = '';
+  try {
+    const response = await fetch(`/api/standings?league=${league}&season=${season}`);
+    const data = await response.json();
+    if (!response.ok || data?.error) throw new Error(data?.error || 'Erreur API');
+    renderStandings(Array.isArray(data) ? data : []);
+    standingsStatus.textContent = `Saison ${season}/${Number(season) + 1}`;
+  } catch (error) {
+    standingsBody.innerHTML = `<tr><td colspan="8">${error.message}</td></tr>`;
+    standingsStatus.textContent = 'Classement indisponible';
+  }
+}
+
+leagueSelect.addEventListener('change', loadStandings);
+seasonSelect.addEventListener('change', loadStandings);
+loadStandings();
+</script>
+</body>
+</html>

@@ -25,6 +25,7 @@
   <button data-filter="tomorrow">DEMAIN</button>
   <button data-filter="yesterday">HIER</button>
   <button data-filter="cotes">COTES</button>
+  <a class="top-link" href="/classements.html">CLASSEMENTS</a>
 </div>
 <main id="list" class="fixtures-list">Chargement...</main>
 
@@ -168,7 +169,7 @@ function renderGroups(groups, filter = currentFilter) {
     group.matches.forEach(match => {
       const homeLogo = renderTeamLogo(match.teams.home);
       const awayLogo = renderTeamLogo(match.teams.away);
-      html += `<div class="match-row">
+      html += `<div class="match-row" data-fixture-id="${match.fixture?.id || ''}" role="link" tabindex="0">
         <div class="match-time">${filter === 'cotes' ? renderOddsTime(match) : renderScore(match)}</div>
         <div class="match-teams"><div>${homeLogo}<span>${match.teams.home.name}</span></div><div>${awayLogo}<span>${match.teams.away.name}</span></div></div>
         <div class="match-score">${filter === 'cotes' ? '' : renderMatchScore(match)}</div>
@@ -230,6 +231,13 @@ document.querySelectorAll('.top-menu button').forEach(button => {
     });
     await loadFilter(currentFilter);
   });
+});
+
+document.getElementById('list').addEventListener('click', event => {
+  if (event.target.closest('.favorite')) return;
+  const row = event.target.closest('.match-row');
+  const fixtureId = row?.dataset.fixtureId;
+  if (fixtureId) window.location.href = `/match.html?id=${encodeURIComponent(fixtureId)}`;
 });
 
 loadFilter('today');

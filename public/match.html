@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Statistiques match - FLASHALLSCORES</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="header">
+  <a class="brand" href="/" aria-label="FLASHALLSCORES">
+    <span class="brand-mark" aria-hidden="true">&#9889;</span>
+    <span>FLASHALLSCORES</span>
+    <span class="live-badge">LIVE</span>
+  </a>
+  <a class="header-link" href="/" aria-label="Retour aux matchs">MATCHS</a>
+</header>
+<nav class="match-tabs" aria-label="Vue du match">
+  <button type="button" data-tab="summary">RESUME</button>
+  <button type="button" class="active" data-tab="statistics">STATISTIQUES</button>
+</nav>
+<main class="page-content">
+  <a class="back-link" href="/">&#8592; Retour aux matchs</a>
+  <section class="match-summary">
+    <p class="eyebrow">STATISTIQUES DU MATCH</p>
+    <div class="match-header-teams">
+      <div class="match-header-team"><img id="homeLogo" alt=""><strong id="homeTeam">Equipe 1</strong></div>
+      <div class="match-header-score"><strong id="matchScore">-</strong><span id="matchMinute">-</span></div>
+      <div class="match-header-team"><img id="awayLogo" alt=""><strong id="awayTeam">Equipe 2</strong></div>
+    </div>
+  </section>
+  <p id="statisticsStatus" class="page-status">Chargement...</p>
+  <section id="summaryPanel" class="tab-panel"><p class="empty-state">Le résumé du match sera disponible prochainement.</p></section>
+  <section id="statisticsList" class="statistics-list tab-panel"></section>
+</main>
+<script>
+const fixtureId = new URLSearchParams(window.location.search).get('id');
+const statisticsStatus = document.getElementById('statisticsStatus');
+const statisticsList = document.getElementById('statisticsList');
+const summaryPanel = document.getElementById('summaryPanel');
+const homeTeam = document.getElementById('homeTeam');
+const awayTeam = document.getElementById('awayTeam');
+const homeLogo = document.getElementById('homeLogo');
+const awayLogo = document.getElementById('awayLogo');
+const matchScore = document.getElementById('matchScore');
+const matchMinute = document.getElementById('matchMinute');
+const wantedStats = [
+  ['Ball possession', 'Possession'],
+  ['Total Shots', 'Tirs totaux'],
+  ['Shots on Goal', 'Tirs cadres'],
+  ['Corner Kicks', 'Corners'],
+  ['Offsides', 'Hors-jeu'],
+  ['Fouls', 'Fautes'],
+  ['Yellow Cards', 'Cartons jaunes'],
+  ['Red Cards', 'Cartons rouges']
+];
+
+function numericValue(value) {
+  if (value === null || value === undefined) return 0;
+  const number = Number.parseFloat(String(value).replace('%', ''));
+  return Number.isFinite(number) ? number : 0;
+}
+
+function displayValue(value) {
+  return value === null || value === undefined ? '-' : value;
+}
+
+function renderStatistics(data) {
+  const teams = data.slice(0, 2);
+  if (teams.length < 2) {
+    statisticsList.innerHTML = '<p class="empty-state">Aucune statistique disponible pour ce match.</p>';
+    return;
+  }
+
+  homeTeam.textContent = teams[0].team?.name || 'Equipe 1';
+  awayTeam.textContent = teams[1].team?.name || 'Equipe 2';
+  homeLogo.src = teams[0].team?.logo || '';
+  awayLogo.src = teams[1].team?.logo || '';
+  statisticsList.innerHTML = wantedStats.map(([apiName, label]) => {
+    const home = teams[0].statistics?.find(item => item.type === apiName)?.value;
+    const away = teams[1].statistics?.find(item => item.type === apiName)?.value;
+    const homeNumber = numericValue(home);
+    const awayNumber = numericValue(away);
+    const total = homeNumber + awayNumber;
+    const homeWidth = total > 0 ? (homeNumber / total) * 100 : 50;
+    const awayWidth = total > 0 ? (awayNumber / total) * 100 : 50;
+    return `<article class="stat-card">
+      <div class="stat-values"><strong>${displayValue(home)}</strong><span>${label}</span><strong>${displayValue(away)}</strong></div>
+      <div class="stat-bar" aria-hidden="true"><span style="width:${homeWidth}%"></span><span style="width:${awayWidth}%"></span></div>
+    </article>`;
+  }).join('');
+}
+
+async function loadStatistics() {
+  if (!fixtureId) {
+    statisticsStatus.textContent = 'Fixture introuvable';
+    statisticsList.innerHTML = '<p class="empty-state">Aucun match selectionne.</p>';
+    return;
+  }
+
+  try {
+    const [fixtureResponse, statisticsResponse] = await Promise.all([
+      fetch(`/api/fixture/${encodeURIComponent(fixtureId)}`),
+      fetch(`/api/statistics/${encodeURIComponent(fixtureId)}`)
+    ]);
+    const fixture = await fixtureResponse.json();
+    const data = await statisticsResponse.json();
+    if (!statisticsResponse.ok || data?.error) throw new Error(data?.error || 'Erreur API');
+    if (fixtureResponse.ok && fixture) {
+      homeTeam.textContent = fixture.teams?.home?.name || 'Equipe 1';
+      awayTeam.textContent = fixture.teams?.away?.name || 'Equipe 2';
+      homeLogo.src = fixture.teams?.home?.logo || '';
+      awayLogo.src = fixture.teams?.away?.logo || '';
+      matchScore.textContent = fixture.goals?.home !== null && fixture.goals?.away !== null
+        ? `${fixture.goals.home}-${fixture.goals.away}`
+        : '-';
+      matchMinute.textContent = fixture.fixture?.status?.elapsed
+        ? `${fixture.fixture.status.elapsed}'`
+        : fixture.fixture?.status?.short || '';
+    }
+    renderStatistics(Array.isArray(data) ? data : []);
+    statisticsStatus.textContent = `Fixture #${fixtureId}`;
+  } catch (error) {
+    statisticsStatus.textContent = 'Statistiques indisponibles';
+    statisticsList.innerHTML = `<p class="empty-state">${error.message}</p>`;
+  }
+}
+
+document.querySelectorAll('.match-tabs button').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.match-tabs button').forEach(item => item.classList.toggle('active', item === button));
+    const statisticsActive = button.dataset.tab === 'statistics';
+    statisticsList.hidden = !statisticsActive;
+    summaryPanel.hidden = statisticsActive;
+  });
+});
+
+summaryPanel.hidden = true;
+loadStatistics();
+</script>
+</body>
+</html>
