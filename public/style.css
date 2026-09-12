@@ -1,0 +1,46 @@
+:root{--night:#0a2a5a;--slate:#1e293b;--muted:#64748b;--live-bg:#fee2e2;--live:#dc2626}
+*{box-sizing:border-box}
+html{background:#fff}
+body{max-width:500px;min-height:100vh;margin:0 auto;padding-bottom:20px;background:#fff;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,"Roboto",sans-serif;font-size:12px}
+button{font:inherit}
+.header{height:48px;padding:0 16px;position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;background:#0a2a5a;color:#fff;font-size:16px;font-weight:800}
+.brand{display:flex;align-items:center;gap:8px;color:#fff;text-decoration:none;font-size:16px;font-weight:900;letter-spacing:0}
+.brand-mark{color:#facc15;font-size:23px;line-height:1}
+.live-badge{margin-left:4px;padding:2px 6px;border-radius:4px;background:#facc15;color:#000;font-size:10px;font-weight:700;line-height:1.2}
+.header-actions{display:flex;align-items:center;gap:3px}
+.header-actions button{width:30px;height:30px;padding:0;border:0;border-radius:50%;background:transparent;color:#fff;cursor:pointer;font-size:16px}
+.header-actions button:hover{background:#1e293b}
+.top-menu{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;height:48px;margin:8px 8px 0;padding:0 8px;overflow-x:auto;scroll-behavior:smooth;white-space:nowrap;background:#fff;border-radius:20px;box-shadow:0 2px 5px rgba(0,0,0,.18);scrollbar-width:none}
+.top-menu::-webkit-scrollbar{display:none}
+.top-menu button{flex:0 0 auto;padding:7px 12px;border:0;border-radius:20px;background:transparent;color:#64748b;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap}
+.top-menu button.active{background:#0a2a5a;color:#fff}
+.live-dot{display:inline-block;width:6px;height:6px;margin-right:5px;border-radius:50%;background:#ef4444;animation:pulse-live 1.3s infinite}
+@keyframes pulse-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.75)}}
+.fixtures-list{min-height:100vh;padding:8px 0 20px;background:#fff}
+.league-group{margin:0 0 8px}
+.league-header{display:flex;align-items:center;gap:8px;margin:0 8px;padding:8px 12px;background:var(--slate);color:#fff;border-radius:8px 8px 0 0;font-size:12px;font-weight:700;text-transform:uppercase}
+.league-header img{width:22px;height:14px;object-fit:contain}
+.league-logo{width:22px;height:14px;object-fit:contain}
+.league-flag{width:22px;height:14px;object-fit:cover}
+.league-country{color:#cbd5e1;font-size:10px}
+.league-chevron{margin-left:auto;color:#cbd5e1;font-size:17px;line-height:10px}
+.match-row{height:52px;display:flex;align-items:center;margin:0;padding:0 12px;background:#fff;border-bottom:1px solid #e9ecef}
+.match-time{width:50px;display:flex;flex-direction:column;line-height:1;color:#cc0000;font-size:11px;font-weight:700}
+.live-label{display:block;color:#cc0000;font-size:9px;line-height:10px;letter-spacing:.2px}
+.match-teams{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;padding-left:12px;color:#1e293b;font-size:13px}
+.match-teams>div{display:flex;align-items:center;gap:7px;min-width:0}
+.match-teams span:not(.team-logo){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.team-logo{width:22px;height:22px;flex:0 0 22px;display:inline-flex;align-items:center;justify-content:center;border:2px solid #fff;border-radius:50%;background:#fff;box-shadow:0 0 0 1px #e2e8f0;object-fit:contain}
+.team-logo-placeholder{color:#64748b;font-size:10px;font-weight:800}
+.match-score{min-width:50px;text-align:right;color:#0f172a;font-size:14px;font-weight:700;line-height:1}
+.match-score small{display:block;color:#94a3b8;font-size:9px;font-weight:400;line-height:10px}
+.live-score{display:inline-block;padding:2px 8px;border-radius:12px;background:var(--live-bg);color:var(--live)}
+.match-right{display:flex;align-items:center;gap:5px}
+.favorite{padding:3px;border:0;background:transparent;color:#94a3b8;cursor:pointer;font-size:21px;line-height:1}
+.favorite:hover{color:#f59e0b}
+.odds{display:flex;gap:2px}
+.odds span{min-width:26px;padding:3px 4px;border:1px solid #e2e8f0;border-radius:4px;background:#f8fafc;color:#475569;font-size:10px;text-align:center}
+.bottom-nav,.footer{display:none}
+.bottom-nav a{min-width:58px;padding:7px 4px 4px;display:flex;flex-direction:column;align-items:center;gap:4px;color:#64748b;text-decoration:none;font-size:10px;font-weight:600}
+.bottom-nav a span:first-child{font-size:18px;line-height:18px}
+@media (max-width:400px){.odds{display:none}.match-row{padding-right:8px}.brand{font-size:13px}}
