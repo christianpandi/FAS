@@ -30,217 +30,94 @@
 <main id="list" class="fixtures-list">Chargement...</main>
 
 <script>
-const LIVE_STATUSES = ['LIVE', '1H', '2H', 'HT', 'ET', 'P', 'BT'];
-const FINISHED_STATUSES = ['FT', 'AET', 'PEN'];
-const MOCK = [
-  { id: 1, league: 'MONDE: Simulated Reality League', home: 'France SRL', away: 'Germany SRL', score: '1-0', minute: '34', status: 'live' },
-  { id: 2, league: 'MONDE: Simulated Reality League', home: 'Spain SRL', away: 'Italy SRL', score: '2-1', minute: '67', status: 'live' }
-];
-let allGroups = [];
-let allMatches = [];
-let matchesWithOdds = [];
-let currentFilter = 'today';
+const list = document.getElementById('list');
+const blockedLeaguePattern = /srl|esoccer/i;
 
-function renderScore(f) {
-  const s = f.fixture.status.short;
-  const elapsed = f.fixture.status.elapsed;
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[character]));
+}
 
-  if (['1H', '2H', 'ET'].includes(s)) {
-    const minute = elapsed ? `${elapsed}'` : s;
-    return `<span class='live-label'>LIVE</span>${minute}`;
+function matchTime(match) {
+  const status = match.fixture?.status?.short;
+  if (['FT', 'AET', 'PEN'].includes(status)) return 'FT';
+  if (['1H', '2H', 'ET'].includes(status)) {
+    return `${match.fixture.status.elapsed || status}'`;
   }
-  if (s === 'HT') return '<span class="live-label">LIVE</span>MT';
-  if (['FT', 'AET', 'PEN'].includes(s)) return 'FT';
-  return new Date(f.fixture.date).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-}
-
-function renderMatchScore(f) {
-  const homeGoal = f?.goals?.home;
-  const awayGoal = f?.goals?.away;
-  const hasScore = homeGoal !== null && homeGoal !== undefined && awayGoal !== null && awayGoal !== undefined;
-  const status = f?.fixture?.status?.short || 'NS';
-  if (status === 'NS') return '-';
-
-  const score = hasScore ? `${homeGoal}-${awayGoal}` : ' - ';
-  const ht = f?.score?.halftime;
-  const htTxt = (ht && ht.home !== null && ht.away !== null) ? ` (${ht.home}-${ht.away})` : '';
-  const isLive = LIVE_STATUSES.includes(status);
-  return `<span class="${isLive ? 'live-score' : ''}">${score}</span><small>${htTxt}</small>`;
-}
-
-function renderTeamLogo(team) {
-  if (team.logo) return `<img src="${team.logo}" alt="" class="team-logo">`;
-  return `<span class="team-logo team-logo-placeholder">${team.name.charAt(0)}</span>`;
-}
-
-function mockToGroups() {
-  return [{
-    league: { name: MOCK[0].league, country: '', flag: '' },
-    matches: MOCK.map(match => {
-      const [homeGoals, awayGoals] = match.score.split('-').map(Number);
-      return {
-        fixture: { id: match.id, date: new Date().toISOString(), status: { short: '1H', elapsed: Number(match.minute) } },
-        league: { name: match.league, country: '', flag: '' },
-        teams: { home: { name: match.home, logo: null }, away: { name: match.away, logo: null } },
-        goals: { home: homeGoals, away: awayGoals },
-        score: { halftime: { home: null, away: null } }
-      };
-    })
-  }];
-}
-
-function getDateWithOffset(offsetDays) {
-  const date = new Date();
-  date.setDate(date.getDate() + offsetDays);
-  return date.toISOString().split('T')[0];
-}
-
-function filterGroups(groups, filter) {
-  if (filter === 'cotes') {
-    const oddsIds = new Set(matchesWithOdds.map(match => match.fixture.id));
-    return groups
-      .map(group => ({
-        ...group,
-        matches: group.matches.filter(match => oddsIds.has(match.fixture.id))
-      }))
-      .filter(group => group.matches.length > 0);
-  }
-
-  if (filter === 'today' || filter === 'tomorrow' || filter === 'yesterday') return groups;
-
-  const statuses = filter === 'live' ? LIVE_STATUSES : FINISHED_STATUSES;
-  return groups
-    .map(group => ({
-      ...group,
-      matches: group.matches.filter(match =>
-        statuses.includes(match.fixture?.status?.short)
-      )
-    }))
-    .filter(group => group.matches.length > 0);
-}
-
-function showOnly(statuses) {
-  const filteredGroups = allGroups
-    .map(group => ({
-      ...group,
-      matches: group.matches.filter(match =>
-        statuses.includes(match.fixture?.status?.short)
-      )
-    }))
-    .filter(group => group.matches.length > 0);
-
-  renderGroups(filteredGroups, currentFilter);
-}
-
-function showAll() {
-  renderGroups(allGroups, currentFilter);
-}
-
-function renderOddsTime(match) {
-  return new Date(match.fixture.date).toLocaleTimeString('fr-FR', {
+  if (status === 'HT') return 'MT';
+  return new Date(match.fixture?.date).toLocaleTimeString('fr-FR', {
+    timeZone: 'Africa/Kinshasa',
     hour: '2-digit',
     minute: '2-digit'
   });
 }
 
-function renderGroups(groups, filter = currentFilter) {
-  if (groups.length === 0) {
-    const message = filter === 'finished'
-      ? 'Aucun match terminé'
-      : filter === 'live'
-        ? 'Aucun match en direct'
-        : 'Aucun match dans cette catégorie';
-    document.getElementById('list').innerHTML = message;
-    return;
-  }
-
-  let html = '';
-  for (const group of groups) {
-    const league = group.league;
-    const flag = league.flag || league.country;
-    const flagMarkup = flag && /^https?:\/\//i.test(flag)
-      ? `<img class="league-flag" src="${flag}" alt="">`
-      : `<span class="league-country">${flag || ''}</span>`;
-    const logoMarkup = league.logo
-      ? `<img class="league-logo" src="${league.logo}" alt="">`
-      : '';
-
-    html += `<section class="league-group"><div class="league-header">${logoMarkup}${flagMarkup}<span>${league.country || ''} - ${league.name || ''}</span><span class="league-chevron" aria-hidden="true">&#8964;</span></div>`;
-    group.matches.forEach(match => {
-      const homeLogo = renderTeamLogo(match.teams.home);
-      const awayLogo = renderTeamLogo(match.teams.away);
-      html += `<div class="match-row" data-fixture-id="${match.fixture?.id || ''}" role="link" tabindex="0">
-        <div class="match-time">${filter === 'cotes' ? renderOddsTime(match) : renderScore(match)}</div>
-        <div class="match-teams"><div>${homeLogo}<span>${match.teams.home.name}</span></div><div>${awayLogo}<span>${match.teams.away.name}</span></div></div>
-        <div class="match-score">${filter === 'cotes' ? '' : renderMatchScore(match)}</div>
-        <div class="match-right">${filter === 'cotes' ? `<div class="odds"><span>${match.odds?.home || '-'}</span><span>${match.odds?.draw || '-'}</span><span>${match.odds?.away || '-'}</span></div>` : ''}<button class="favorite" type="button" aria-label="Ajouter aux favoris">&#9734;</button></div>
-      </div>`;
-    });
-    html += '</section>';
-  }
-
-  document.getElementById('list').innerHTML = html;
+function matchScore(match) {
+  const home = match.goals?.home;
+  const away = match.goals?.away;
+  return home === null || home === undefined || away === null || away === undefined
+    ? '-'
+    : `${home}-${away}`;
 }
 
-async function loadFilter(filter) {
-  currentFilter = filter;
-  let url = `/api/fixtures?date=${getDateWithOffset(0)}`;
-  if (filter === 'live') {
-    url = '/api/fixtures?live=all';
-  }
-  if (filter === 'tomorrow') {
-    url = `/api/fixtures?date=${getDateWithOffset(1)}`;
-  }
-  if (filter === 'yesterday') {
-    url = `/api/fixtures?date=${getDateWithOffset(-1)}`;
-  }
-
-  console.log('Chargement', url);
-  const res = await fetch(url);
-  const data = await res.json();
-  console.log('DATA REÇUE', data);
-
-  if (!res.ok || data?.error) {
-    document.getElementById('list').innerHTML = data?.error || "Erreur API";
-    return;
-  }
-
-  if (!Array.isArray(data) || data.length === 0) {
-    allGroups = [];
-    allMatches = [];
-    matchesWithOdds = [];
-    document.getElementById('list').innerHTML = 'Aucun match pour cette date';
-    return;
-  }
-
-  allGroups = data;
-  allMatches = allGroups.flatMap(group => group.matches || []);
-  matchesWithOdds = allMatches.filter(match => match.odds && match.odds.home !== '-');
-
-  if (filter === 'live') showOnly(LIVE_STATUSES);
-  if (filter === 'finished') showOnly(FINISHED_STATUSES);
-  if (filter === 'today' || filter === 'tomorrow' || filter === 'yesterday') showAll();
-  if (filter === 'cotes') renderGroups(filterGroups(allGroups, filter), filter);
-}
-
-document.querySelectorAll('.top-menu button').forEach(button => {
-  button.addEventListener('click', async () => {
-    currentFilter = button.dataset.filter;
-    document.querySelectorAll('.top-menu button').forEach(item => {
-      item.classList.toggle('active', item === button);
+function renderMatches(fixtures) {
+  const groups = new Map();
+  fixtures
+    .filter(match => !blockedLeaguePattern.test(match.league?.name || ''))
+    .forEach(match => {
+      const country = match.league?.country || 'Monde';
+      const name = match.league?.name || 'Championnat inconnu';
+      const key = `${country}::${name}`;
+      if (!groups.has(key)) groups.set(key, { country, name, matches: [] });
+      groups.get(key).matches.push(match);
     });
-    await loadFilter(currentFilter);
+
+  if (groups.size === 0) {
+    list.textContent = 'Aucun match - vérifie /api/matches';
+    return;
+  }
+
+  list.innerHTML = [...groups.values()].map(group => `
+    <section class="league-group">
+      <div class="league-header">
+        <span class="league-country">${escapeHtml(group.country)}</span>
+        <span>${escapeHtml(group.country)} - ${escapeHtml(group.name)}</span>
+      </div>
+      ${group.matches.map(match => `
+        <div class="match-row" data-fixture-id="${escapeHtml(match.fixture?.id || '')}">
+          <div class="match-time">${escapeHtml(matchTime(match))}</div>
+          <div class="match-teams">
+            <div><span>${escapeHtml(match.teams?.home?.name || 'Equipe inconnue')}</span></div>
+            <div><span>${escapeHtml(match.teams?.away?.name || 'Equipe inconnue')}</span></div>
+          </div>
+          <div class="match-score">${escapeHtml(matchScore(match))}</div>
+        </div>`).join('')}
+    </section>`).join('');
+
+  list.querySelectorAll('.match-row[data-fixture-id]').forEach(row => {
+    row.addEventListener('click', () => {
+      window.location.href = `/match/${encodeURIComponent(row.dataset.fixtureId)}`;
+    });
   });
-});
+}
 
-document.getElementById('list').addEventListener('click', event => {
-  if (event.target.closest('.favorite')) return;
-  const row = event.target.closest('.match-row');
-  const fixtureId = row?.dataset.fixtureId;
-  if (fixtureId) window.location.href = `/match.html?id=${encodeURIComponent(fixtureId)}`;
-});
+async function loadMatches() {
+  try {
+    const response = await fetch('/api/matches');
+    const data = await response.json();
+    if (!response.ok || data?.error) throw new Error(data?.error || 'Erreur API');
+    renderMatches(Array.isArray(data) ? data : []);
+  } catch (error) {
+    list.textContent = error.message || 'Erreur API';
+  }
+}
 
-loadFilter('today');
+loadMatches();
 </script>
 </body>
 </html>

@@ -277,6 +277,13 @@ async function fetchFootballApi(endpoint) {
     headers: { 'x-apisports-key': apiFootballKey }
   });
   const data = await response.json();
+  console.log('Réponse API-Football:', {
+    endpoint,
+    status: response.status,
+    ok: response.ok,
+    response: data.response,
+    errors: data.errors
+  });
 
   if (!response.ok || data.errors && Object.keys(data.errors).length > 0) {
     return { error: 'Erreur API-Football', details: data.errors };
@@ -342,6 +349,30 @@ app.get('/api/fixture/:fixture', async (req, res) => {
     console.error('Erreur détail fixture:', error);
     return res.status(502).json({ error: 'Impossible de récupérer le match' });
   }
+});
+
+app.get('/api/events/:fixture', async (req, res) => {
+  const fixture = Number(req.params.fixture);
+  if (!Number.isInteger(fixture) || fixture <= 0) {
+    return res.status(400).json({ error: 'Identifiant fixture invalide' });
+  }
+
+  try {
+    const data = await fetchFootballApi(`fixtures/events?fixture=${fixture}`);
+    if (data.error) return res.status(502).json(data);
+    return res.json(Array.isArray(data.response) ? data.response : []);
+  } catch (error) {
+    console.error('Erreur événements fixture:', error);
+    return res.status(502).json({ error: 'Impossible de récupérer les événements' });
+  }
+});
+
+app.get('/match/:fixture', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'match.html'));
+});
+
+app.get('/match', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'match.html'));
 });
 
 app.get('*', (req, res) => {

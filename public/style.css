@@ -75,6 +75,9 @@ button{font:inherit}
 .match-header-team strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;font-size:12px}
 .match-header-score{display:flex;flex-direction:column;align-items:center;gap:5px}
 .match-header-score strong{font-size:20px}.match-header-score span{color:#cbd5e1;font-size:11px;font-weight:700}
+.match-events{display:grid;gap:7px;margin-top:12px}
+.match-event{display:grid;grid-template-columns:32px 24px 1fr;align-items:center;gap:7px;padding:9px 10px;border-radius:5px;background:#fff;color:#0f172a;font-size:12px}
+.match-event>strong{color:#dc2626;text-align:center}.event-icon{font-size:16px;text-align:center}.match-event span:last-child{display:flex;flex-direction:column;gap:2px}.match-event small{color:#64748b;font-size:10px}
 .statistics-list{display:grid;gap:8px}
 .stat-card{padding:12px;background:#fff;border:1px solid #e2e8f0;border-radius:6px}
 .stat-values{display:grid;grid-template-columns:48px 1fr 48px;align-items:center;gap:8px;color:#0f172a;text-align:center}

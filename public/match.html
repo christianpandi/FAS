@@ -16,8 +16,8 @@
   <a class="header-link" href="/" aria-label="Retour aux matchs">MATCHS</a>
 </header>
 <nav class="match-tabs" aria-label="Vue du match">
-  <button type="button" data-tab="summary">RESUME</button>
-  <button type="button" class="active" data-tab="statistics">STATISTIQUES</button>
+  <button type="button" class="active" data-tab="summary">RESUME</button>
+  <button type="button" data-tab="statistics">STATISTIQUES</button>
 </nav>
 <main class="page-content">
   <a class="back-link" href="/">&#8592; Retour aux matchs</a>
@@ -30,14 +30,19 @@
     </div>
   </section>
   <p id="statisticsStatus" class="page-status">Chargement...</p>
-  <section id="summaryPanel" class="tab-panel"><p class="empty-state">Le résumé du match sera disponible prochainement.</p></section>
+  <section id="summaryPanel" class="tab-panel">
+    <div id="matchEvents" class="match-events"></div>
+  </section>
   <section id="statisticsList" class="statistics-list tab-panel"></section>
 </main>
 <script>
-const fixtureId = new URLSearchParams(window.location.search).get('id');
+const pathParts = window.location.pathname.split('/').filter(Boolean);
+const queryFixtureId = new URLSearchParams(window.location.search).get('id');
+const fixtureId = decodeURIComponent(queryFixtureId || (pathParts[0] === 'match' ? pathParts[1] : '') || '');
 const statisticsStatus = document.getElementById('statisticsStatus');
 const statisticsList = document.getElementById('statisticsList');
 const summaryPanel = document.getElementById('summaryPanel');
+const matchEvents = document.getElementById('matchEvents');
 const homeTeam = document.getElementById('homeTeam');
 const awayTeam = document.getElementById('awayTeam');
 const homeLogo = document.getElementById('homeLogo');
@@ -63,6 +68,38 @@ function numericValue(value) {
 
 function displayValue(value) {
   return value === null || value === undefined ? '-' : value;
+}
+
+function renderFixture(fixture) {
+  homeTeam.textContent = fixture.teams?.home?.name || 'Equipe 1';
+  awayTeam.textContent = fixture.teams?.away?.name || 'Equipe 2';
+  homeLogo.src = fixture.teams?.home?.logo || '';
+  awayLogo.src = fixture.teams?.away?.logo || '';
+  matchScore.textContent = fixture.goals?.home != null && fixture.goals?.away != null
+    ? `${fixture.goals.home}-${fixture.goals.away}`
+    : '-';
+  matchMinute.textContent = fixture.fixture?.status?.elapsed
+    ? `${fixture.fixture.status.elapsed}'`
+    : fixture.fixture?.status?.short || '';
+}
+
+function renderEvents(events, fixture) {
+  if (!events.length) {
+    matchEvents.innerHTML = '<p class="empty-state">Aucun but ou carton enregistre pour le moment.</p>';
+    return;
+  }
+
+  const homeName = fixture.teams?.home?.name;
+  matchEvents.innerHTML = events.map(event => {
+    const isCard = event.type === 'Card';
+    const detail = event.detail || (isCard ? 'Carton' : 'But');
+    const icon = isCard ? (detail.toLowerCase().includes('red') ? '&#128308;' : '&#128994;') : '&#9917;';
+    return `<article class="match-event">
+      <strong>${event.time?.elapsed || '-'}'</strong>
+      <span class="event-icon">${icon}</span>
+      <span><b>${displayValue(event.player?.name)}</b><small>${detail} - ${event.team?.name === homeName ? 'Domicile' : 'Exterieur'}</small></span>
+    </article>`;
+  }).join('');
 }
 
 function renderStatistics(data) {
@@ -99,27 +136,24 @@ async function loadStatistics() {
   }
 
   try {
-    const [fixtureResponse, statisticsResponse] = await Promise.all([
+    const [fixtureResponse, statisticsResponse, eventsResponse] = await Promise.all([
       fetch(`/api/fixture/${encodeURIComponent(fixtureId)}`),
-      fetch(`/api/statistics/${encodeURIComponent(fixtureId)}`)
+      fetch(`/api/statistics/${encodeURIComponent(fixtureId)}`),
+      fetch(`/api/events/${encodeURIComponent(fixtureId)}`)
     ]);
     const fixture = await fixtureResponse.json();
     const data = await statisticsResponse.json();
-    if (!statisticsResponse.ok || data?.error) throw new Error(data?.error || 'Erreur API');
-    if (fixtureResponse.ok && fixture) {
-      homeTeam.textContent = fixture.teams?.home?.name || 'Equipe 1';
-      awayTeam.textContent = fixture.teams?.away?.name || 'Equipe 2';
-      homeLogo.src = fixture.teams?.home?.logo || '';
-      awayLogo.src = fixture.teams?.away?.logo || '';
-      matchScore.textContent = fixture.goals?.home !== null && fixture.goals?.away !== null
-        ? `${fixture.goals.home}-${fixture.goals.away}`
-        : '-';
-      matchMinute.textContent = fixture.fixture?.status?.elapsed
-        ? `${fixture.fixture.status.elapsed}'`
-        : fixture.fixture?.status?.short || '';
+    const events = eventsResponse.ok ? await eventsResponse.json() : [];
+    if (!fixtureResponse.ok || !fixture || fixture.error) {
+      throw new Error(fixture?.error || 'Impossible de récupérer le match');
     }
-    renderStatistics(Array.isArray(data) ? data : []);
-    statisticsStatus.textContent = `Fixture #${fixtureId}`;
+    renderFixture(fixture);
+    renderEvents(Array.isArray(events) ? events : [], fixture || {});
+    const hasStatistics = statisticsResponse.ok && !data?.error && Array.isArray(data) && data.length >= 2;
+    renderStatistics(hasStatistics ? data : []);
+    statisticsStatus.textContent = hasStatistics
+      ? `Fixture #${fixtureId}`
+      : `Fixture #${fixtureId} - statistiques indisponibles`;
   } catch (error) {
     statisticsStatus.textContent = 'Statistiques indisponibles';
     statisticsList.innerHTML = `<p class="empty-state">${error.message}</p>`;
@@ -135,7 +169,6 @@ document.querySelectorAll('.match-tabs button').forEach(button => {
   });
 });
 
-summaryPanel.hidden = true;
 loadStatistics();
 </script>
 </body>

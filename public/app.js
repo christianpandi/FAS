@@ -62,7 +62,9 @@ async function loadMatches() {
     });
 
     matchesContainer.innerHTML = html;
-    statusDiv.innerText = `Flash All Scores - ${matches.length} matchs live - ${new Date().toLocaleTimeString()}`;
+    statusDiv.innerText = matches.length === 0
+      ? "Aucun match réel aujourd'hui - voir classements"
+      : `Flash All Scores - ${matches.length} matchs live - ${new Date().toLocaleTimeString()}`;
 
   } catch (e) {
     statusDiv.innerText = e.message || "Erreur Flash All Scores - vérifie ta clé dans .env";
