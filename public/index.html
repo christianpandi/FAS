@@ -112,10 +112,7 @@ async function loadMatches() {
     const data = await res.json();
     if (!res.ok || data?.error) throw new Error(data?.error || 'Erreur API');
 
-    const payload = data.response || data || [];
-    const matches = Array.isArray(payload)
-      ? payload.flatMap(item => Array.isArray(item.matches) ? item.matches : [item])
-      : [];
+    const matches = data.response || data || [];
 
     console.log('matches.length:', matches.length);
     if (!matches.length) {
