@@ -108,10 +108,21 @@ function renderMatches(fixtures) {
 
 async function loadMatches() {
   try {
-    const response = await fetch('/api/matches');
-    const data = await response.json();
-    if (!response.ok || data?.error) throw new Error(data?.error || 'Erreur API');
-    renderMatches(Array.isArray(data) ? data : []);
+    const res = await fetch('/api/matches');
+    const data = await res.json();
+    if (!res.ok || data?.error) throw new Error(data?.error || 'Erreur API');
+
+    const payload = data.response || data || [];
+    const matches = Array.isArray(payload)
+      ? payload.flatMap(item => Array.isArray(item.matches) ? item.matches : [item])
+      : [];
+
+    console.log('matches.length:', matches.length);
+    if (!matches.length) {
+      document.body.innerHTML += '<pre>' + JSON.stringify(data).slice(0, 500) + '</pre>';
+    }
+
+    renderMatches(matches);
   } catch (error) {
     list.textContent = error.message || 'Erreur API';
   }
