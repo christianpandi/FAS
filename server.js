@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
-const MATCH_CACHE_TTL = 5 * 60 * 1000;
+const MATCH_CACHE_TTL = 15 * 60 * 1000;
 const BIG_LEAGUES_IDS = [39, 140, 61, 78, 135, 2, 3];
 const cache = global.cacheFixtures || (global.cacheFixtures = {});
 let externalRequest = null;
